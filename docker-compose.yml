@@ -1,0 +1,26 @@
+services:
+  web:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      SESSION_SECRET: ${SESSION_SECRET:?Set a long random SESSION_SECRET}
+      TRUST_PROXY: ${TRUST_PROXY:-0}
+      DB_PATH: /data/store.sqlite
+      UPLOAD_DIR: /data/private_uploads
+      ADMIN_USERNAME: ${ADMIN_USERNAME:?Set ADMIN_USERNAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set a strong ADMIN_PASSWORD}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
+      WHATSAPP_ACCESS_TOKEN: ${WHATSAPP_ACCESS_TOKEN:-}
+      WHATSAPP_API_VERSION: ${WHATSAPP_API_VERSION:-}
+      WHATSAPP_APPROVED_TEMPLATE: ${WHATSAPP_APPROVED_TEMPLATE:-}
+      WHATSAPP_REJECTED_TEMPLATE: ${WHATSAPP_REJECTED_TEMPLATE:-}
+      WHATSAPP_TEMPLATE_LANGUAGE: ${WHATSAPP_TEMPLATE_LANGUAGE:-en}
+    volumes:
+      - store_data:/data
+
+volumes:
+  store_data:

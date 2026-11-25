@@ -1,0 +1,10 @@
+.vercel/
+.env*
+!.env.example
+!.env.vercel.example
+node_modules/
+npm-debug.log*
+.git/
+*.sqlite
+*.sqlite-*
+private_uploads/
