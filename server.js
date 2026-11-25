@@ -1,3 +1,19 @@
+if(process.env.VERCEL){
+ const express=require('express');
+ const path=require('node:path');
+ const helmet=require('helmet');
+ const app=express();
+ const publicDir=path.join(__dirname,'public');
+ app.disable('x-powered-by');
+ app.use(helmet({contentSecurityPolicy:{directives:{defaultSrc:["'self'"],scriptSrc:["'self'"],styleSrc:["'self'","'unsafe-inline'"],imgSrc:["'self'",'data:','https:'],objectSrc:["'none'"]}}}));
+ app.use('/api',(req,res)=>res.status(503).json({error:'Checkout and order services are temporarily unavailable during database migration.'}));
+ app.get('/admin',(req,res)=>res.sendFile(path.join(publicDir,'admin.html')));
+ app.get('/track/:token',(req,res)=>res.sendFile(path.join(publicDir,'track.html')));
+ app.use(express.static(publicDir,{fallthrough:true,maxAge:'1h'}));
+ app.get('*',(req,res)=>res.sendFile(path.join(publicDir,'index.html')));
+ app.use((err,req,res,next)=>{console.error('Static Vercel handler error:',err.message);res.status(500).send('Page unavailable');});
+ module.exports=app;
+}else{
 const express = require('express');
 const session = require('express-session');
 const SQLiteStore = require('connect-sqlite3')(session);
@@ -166,3 +182,4 @@ app.get('*',(req,res)=>res.sendFile(path.join(ROOT,'public/index.html')));
 app.use((err,req,res,next)=>{console.error(err);res.status(err instanceof multer.MulterError?400:500).json({error:err instanceof multer.MulterError?'Upload exceeds limits or is invalid.':'Server error.'})});
 if(!process.env.VERCEL)app.listen(PORT,()=>console.log(`AgizaFlow listening on port ${PORT}`));
 module.exports=app;
+}
