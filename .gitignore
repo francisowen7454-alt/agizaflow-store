@@ -8,3 +8,7 @@ npm-debug.log*
 *.sqlite
 *.sqlite-*
 private_uploads/
+.bootstrap-admin-password.tmp
+
+.vercel
+.env*

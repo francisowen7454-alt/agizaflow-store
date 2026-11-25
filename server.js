@@ -1,18 +1,5 @@
 if(process.env.VERCEL){
- const express=require('express');
- const path=require('node:path');
- const helmet=require('helmet');
- const app=express();
- const publicDir=path.join(__dirname,'public');
- app.disable('x-powered-by');
- app.use(helmet({contentSecurityPolicy:{directives:{defaultSrc:["'self'"],scriptSrc:["'self'"],styleSrc:["'self'","'unsafe-inline'"],imgSrc:["'self'",'data:','https:'],objectSrc:["'none'"]}}}));
- app.use('/api',(req,res)=>res.status(503).json({error:'Checkout and order services are temporarily unavailable during database migration.'}));
- app.get('/admin',(req,res)=>res.sendFile(path.join(publicDir,'admin.html')));
- app.get('/track/:token',(req,res)=>res.sendFile(path.join(publicDir,'track.html')));
- app.use(express.static(publicDir,{fallthrough:true,maxAge:'1h'}));
- app.get('*',(req,res)=>res.sendFile(path.join(publicDir,'index.html')));
- app.use((err,req,res,next)=>{console.error('Static Vercel handler error:',err.message);res.status(500).send('Page unavailable');});
- module.exports=app;
+ module.exports=require('./api/index');
 }else{
 const express = require('express');
 const session = require('express-session');
@@ -56,6 +43,7 @@ CREATE TABLE IF NOT EXISTS order_history(id INTEGER PRIMARY KEY, order_id INTEGE
 CREATE TABLE IF NOT EXISTS notification_history(id INTEGER PRIMARY KEY, order_id INTEGER REFERENCES orders(id), channel TEXT NOT NULL, outcome TEXT NOT NULL, detail TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
 CREATE TABLE IF NOT EXISTS regions(id INTEGER PRIMARY KEY, country_code TEXT NOT NULL DEFAULT 'TZ', name TEXT NOT NULL, UNIQUE(country_code,name));
 CREATE TABLE IF NOT EXISTS districts(id INTEGER PRIMARY KEY, region_id INTEGER NOT NULL REFERENCES regions(id) ON DELETE CASCADE, name TEXT NOT NULL, UNIQUE(region_id,name));
+CREATE TABLE IF NOT EXISTS payment_verification_history(id INTEGER PRIMARY KEY,order_id INTEGER NOT NULL REFERENCES orders(id),admin_id INTEGER REFERENCES admins(id),old_status TEXT NOT NULL,new_status TEXT NOT NULL,note TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
 `);
 const customerColumns=db.prepare('PRAGMA table_info(customers)').all().map(c=>c.name);
 if(!customerColumns.includes('whatsapp_phone'))db.exec("ALTER TABLE customers ADD COLUMN whatsapp_phone TEXT NOT NULL DEFAULT ''");
