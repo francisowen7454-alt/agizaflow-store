@@ -1,7 +1,16 @@
-// Vercel entrypoint deliberately fails closed: routes remain SQLite-backed.
-if(process.env.VERCEL){
-  if(!(process.env.BLOB_READ_WRITE_TOKEN||(process.env.BLOB_STORE_ID&&process.env.VERCEL_OIDC_TOKEN)))throw new Error('Connect the private Blob store using OIDC or provide BLOB_READ_WRITE_TOKEN.');
-  if(!(process.env.DATABASE_URL||process.env.POSTGRES_URL))throw new Error('Connect Neon and configure DATABASE_URL before deploying.');
-  throw new Error('Vercel deployment is disabled until all SQLite route queries are migrated to PostgreSQL and tested.');
-}
-module.exports=require('../server');
+const express=require('express');
+const path=require('node:path');
+
+// Safe Vercel fallback while order storage migration is incomplete.
+// Static storefront/admin pages render; APIs are deliberately unavailable.
+const app=express();
+const publicDir=path.join(__dirname,'..','public');
+app.disable('x-powered-by');
+app.use('/api',(req,res)=>res.status(503).json({error:'Order services are temporarily unavailable while durable database migration is completed.'}));
+app.get('/admin',(req,res)=>res.sendFile(path.join(publicDir,'admin.html')));
+app.get('/track/:token',(req,res)=>res.sendFile(path.join(publicDir,'track.html')));
+app.get('/p/:slug',(req,res)=>res.sendFile(path.join(publicDir,'index.html')));
+app.use(express.static(publicDir,{fallthrough:true,maxAge:process.env.NODE_ENV==='production'?'1h':0}));
+app.get('*',(req,res)=>res.sendFile(path.join(publicDir,'index.html')));
+app.use((err,req,res,next)=>{console.error('Vercel static handler error:',err.message);res.status(500).send('Page unavailable');});
+module.exports=app;
